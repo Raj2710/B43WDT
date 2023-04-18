@@ -3,10 +3,10 @@ var router = express.Router();
 const {UserModel} = require('../schemas/userSchema')
 const mongoose = require('mongoose')
 const {dbUrl} = require('../common/dbConfig')
+const {hashPassword,hashCompare,createToken,validate} = require('../common/auth')
 mongoose.connect(dbUrl)
 
-/* GET users listing. */
-router.get('/', async function(req, res) {
+router.get('/',validate, async function(req, res) {
   try {
     let users = await UserModel.find();
     res.status(200).send({
@@ -14,22 +14,20 @@ router.get('/', async function(req, res) {
       message:"Users Data Fetch Successfull!"
     })
   } catch (error) {
-    res.status(500).send({
-      message:"Internal Server Error",
-      error
-    })
+    res.status(500).send({message:"Internal Server Error",error})
   }
 });
-
-
 
 router.post('/signup',async(req,res)=>{
   try {
     let user = await UserModel.findOne({email:req.body.email})
-    console.log(user)
     if(!user)
     {
+      
+      let hashedPassword = await hashPassword(req.body.password)
+      req.body.password = hashedPassword
       let user = await UserModel.create(req.body)
+
       res.status(201).send({
         message:"User Signup Successfull!"
       })
@@ -40,13 +38,43 @@ router.post('/signup',async(req,res)=>{
     }
 
   } catch (error) {
-    res.status(500).send({
-      message:"Internal Server Error",
-      error
-    })
+    res.status(500).send({message:"Internal Server Error",error})
   }
 })
 
+router.post('/login',async(req,res)=>{
+  try {
+    let user = await UserModel.findOne({email:req.body.email})
+    if(user)
+    {
+      //verify the password
+      if(await hashCompare(req.body.password,user.password)){
+        // create the token
+        let token = await createToken({
+          name:user.name,
+          email:user.email,
+          id:user._id,
+          role:user.role
+        })
+        res.status(200).send({
+          message:"User Signup Successfull!",
+          token
+        })
+      }
+      else
+      {
+        res.status(402).send({message:"Invalid Credentials"})
+      }
+    }
+    else
+    {
+      res.status(400).send({message:"User Does Not Exists!"})
+    }
+
+  } catch (error) {
+    res.status(500).send({message:"Internal Server Error",error})
+  }
+})
 
 router.get('/:id', async(req, res)=> {
   try {
@@ -56,10 +84,7 @@ router.get('/:id', async(req, res)=> {
       message:"Users Data Fetch Successfull!"
     })
   } catch (error) {
-    res.status(500).send({
-      message:"Internal Server Error",
-      error
-    })
+    res.status(500).send({message:"Internal Server Error",error})
   }
 });
 
@@ -84,10 +109,7 @@ router.put('/:id',async(req,res)=>{
     }
 
   } catch (error) {
-    res.status(500).send({
-      message:"Internal Server Error",
-      error
-    })
+    res.status(500).send({message:"Internal Server Error",error})
   }
 })
 
@@ -107,10 +129,7 @@ router.delete('/:id',async(req,res)=>{
     }
 
   } catch (error) {
-    res.status(500).send({
-      message:"Internal Server Error",
-      error
-    })
+    res.status(500).send({message:"Internal Server Error",error})
   }
 })
 

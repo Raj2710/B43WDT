@@ -3,10 +3,10 @@ var router = express.Router();
 const {UserModel} = require('../schemas/userSchema')
 const mongoose = require('mongoose')
 const {dbUrl} = require('../common/dbConfig')
-const {hashPassword,hashCompare,createToken,validate} = require('../common/auth')
+const {hashPassword,hashCompare,createToken,validate,roleAdminGaurd} = require('../common/auth')
 mongoose.connect(dbUrl)
 
-router.get('/',validate, async function(req, res) {
+router.get('/',validate, roleAdminGaurd,async function(req, res) {
   try {
     let users = await UserModel.find();
     res.status(200).send({
@@ -57,7 +57,7 @@ router.post('/login',async(req,res)=>{
           role:user.role
         })
         res.status(200).send({
-          message:"User Signup Successfull!",
+          message:"User Login Successfull!",
           token
         })
       }

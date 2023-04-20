@@ -1,7 +1,7 @@
 import {BrowserRouter,Routes, Route, Navigate} from 'react-router-dom'
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-export const url = "http://localhost:8000"//"https://b43wdt-be.onrender.com"
+export const url = "https://b43wdt-be.onrender.com"
 
 function App() {
   return <>
